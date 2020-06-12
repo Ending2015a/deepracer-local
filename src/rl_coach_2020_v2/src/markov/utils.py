@@ -286,6 +286,8 @@ def copy_best_frozen_model_to_sm_output_dir(s3_bucket, s3_prefix, region,
         log_and_exit("Could not find any frozen model file in the local directory",
                      SIMAPP_S3_DATA_STORE_EXCEPTION,
                      SIMAPP_EVENT_ERROR_CODE_500)
+    print('DEBUG: best_checkpoint_num_s3: {} / dest_dir_pb_files: {}'.format(best_checkpoint_num_s3, dest_dir_pb_files))
+    print('DEBUG: list frozen_models: {}'.format(os.listdir('./frozen_models/agent')))
     # Could not find the deepracer_checkpoints.json file or there are no model.pb files in destination
     if best_checkpoint_num_s3 == -1 or len(dest_dir_pb_files) == 0:
         if len(source_dir_pb_files) > 1:
@@ -299,6 +301,21 @@ def copy_best_frozen_model_to_sm_output_dir(s3_bucket, s3_prefix, region,
         # Delete the current .pb files in the destination direcory
         for filename in dest_dir_pb_files:
             os.remove(os.path.join(dest_dir, filename))
+
+        
+        # Check if the model_{id}.pb exists
+        # If not, check if it exists on minio, 
+        #TODO
+        if not os.path.isfile(os.path.join(source_dir, best_model_name)):
+            print('DEBUG: model does not exist, download from minio: {}'.format(os.path.join(source_dir, best_model_name)))
+            # best_model_name: model_6.pb
+            res = download_frozen_model_from_minio(s3_bucket,
+                                                   s3_prefix,
+                                                   region,
+                                                   best_model_name,
+                                                   s3_endpoint_url)
+
+            print('DEBUG: list ./frozen_models/agent: {}'.format(os.listdir('./frozen_models/agent')))
 
         # Copy the frozen model for the current best checkpoint to the destination directory
         logger.info("Copying the frozen checkpoint from {} to {}.".format(
@@ -316,6 +333,30 @@ def copy_best_frozen_model_to_sm_output_dir(s3_bucket, s3_prefix, region,
                 else:
                     logger.error("Frozen model name not in the right format in the source directory: {}, {}"
                                  .format(filename, source_dir))
+
+def download_frozen_model_from_minio(s3_bucket, s3_prefix, region, best_model_name, s3_endpoint_url):
+    try:
+        print('DEBUG: download the best model from minio: {}'.format(best_model_name))
+        session = boto3.Session()
+        s3_client = session.client('s3', region_name=region, endpoint_url=s3_endpoint_url, config=get_boto_config())
+        # Download the best model if available
+        deepracer_model = os.path.join(os.getcwd(), './frozen_models/agent', best_model_name)
+        print('DEBUG: save model to: {}'.format(deepracer_model))
+                                  
+        s3_client.download_file(Bucket=s3_bucket,
+                                Key=os.path.join(s3_prefix, os.path.join('model', best_model_name)),
+                                Filename=deepracer_model)
+    except botocore.exceptions.ClientError as err:
+        if err.response['Error']['Code'] == "404":
+            logger.info('Unable to find best model on minio: {}'.format(best_model_name))
+            return None
+        else:
+            log_and_exit("Unable to download best model from minio: {}, {}".\
+                         format(best_model_name, err.response['Error']['Code']),
+                         SIMAPP_SIMULATION_WORKER_EXCEPTION, SIMAPP_EVENT_ERROR_CODE_400)
+    except Exception as ex:
+        log_and_exit("Can't download best model from minio: {}, {}".format(best_model_name, ex),
+                     SIMAPP_SIMULATION_WORKER_EXCEPTION, SIMAPP_EVENT_ERROR_CODE_500)
 
 
 def get_best_checkpoint(s3_bucket, s3_prefix, region, s3_endpoint_url=None):
@@ -341,6 +382,7 @@ def get_deepracer_checkpoint(s3_bucket, s3_prefix, region, checkpoint_type, s3_e
        region - Name of the aws region where the job ran
        checkpoint_type - BEST_CHECKPOINT/LAST_CHECKPOINT
     '''
+    print('DEBUG: s3_bucket: {}, s3_prefix: {}, checkpoint_type: {}'.format(s3_bucket, s3_prefix, checkpoint_type))
     try:
         session = boto3.Session()
         s3_client = session.client('s3', region_name=region, endpoint_url=s3_endpoint_url, config=get_boto_config())

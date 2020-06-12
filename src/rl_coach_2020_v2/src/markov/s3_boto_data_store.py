@@ -99,6 +99,7 @@ class S3BotoDataStore(DataStore):
                          SIMAPP_EVENT_ERROR_CODE_500)
 
     def save_to_store(self):
+        print('DEBUG: save_to_store')
         try:
             s3_client = self._get_client()
             base_checkpoint_dir = self.params.base_checkpoint_dir
@@ -179,6 +180,9 @@ class S3BotoDataStore(DataStore):
                                           Bucket=bucket,
                                           Key=self._get_s3_key(frozen_graph_s3_name, agent_key))
                     LOG.info("saved intermediate frozen graph: %s", self._get_s3_key(frozen_graph_s3_name, agent_key))
+
+                    print('DEBUG: checkpoint_num: {}'.format(checkpoint_num))
+                    print('DEBUG: copy best frozen model to sm output dir')
 
                     # Copy the best checkpoint to the SM_MODEL_OUTPUT_DIR
                     copy_best_frozen_model_to_sm_output_dir(bucket,
@@ -273,6 +277,7 @@ class S3BotoDataStore(DataStore):
                          SIMAPP_EVENT_ERROR_CODE_500)
 
     def load_from_store(self, expected_checkpoint_number=-1):
+        print('DEBUG: load_from_store')
         try:
             s3_client = self._get_client()
             base_checkpoint_dir = self.params.base_checkpoint_dir

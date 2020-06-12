@@ -1,39 +1,182 @@
-def reward_function(params):
-    '''
-    Example of rewarding the agent to stay inside two borders
-    and penalizing getting too close to the objects in front
-    '''
 
-    import math
+import math
 
-    # Read input variables
-    waypoints = params['waypoints']
-    closest_waypoints = params['closest_waypoints']
-    heading = params['heading']
-    all_wheels_on_track = params['all_wheels_on_track']
-    distance_from_center = params['distance_from_center']
-    track_width = params['track_width']
-    progress = params['progress']
-    steps = params['steps']
+cx = [7.931820869445801, 8.193934082481203, 8.380947164445661, 8.484098087592619, 8.567660520355355, 8.674428382713392, 8.786793092179519, 8.878025174224224, 8.918737399045934, 8.878873204271606, 8.735721347921434, 8.471736039008716, 8.092476234676447, 7.62599768052205, 7.115889655805235, 6.604404235645347, 6.0997489027947065, 5.60015691282637, 5.10386025703177, 4.609090926702332, 4.114080913129487, 3.6172017240048233, 3.118219108813244, 2.617700848114218, 2.1162243214041982, 1.61436690817964, 1.1127059879369952, 0.6118189401727194, 0.11228314438326643, -0.3853240199349101, -0.8806159352148001, -1.3744068919009835, -1.8679768738884035, -2.3626069514552954, -2.8595781948798935, -3.360171674440434, -3.865668460415151, -4.377349623082281, -4.894004169918627, -5.370758234695282, -5.739890560342982, -6.041210397323377, -6.3325140307895165, -6.609661041385556, -6.88595029629017, -7.180181679371875, -7.484867510544151, -7.778898325483017, -8.007124486066186, -8.105856741830397, -8.076906287074438, -7.906177641444097, -7.594662151981319, -7.1788460778265515, -6.710305785666499, -6.23249470611816, -5.7516691488911835, -5.267430290423499, -4.778025257456778, -4.282332276590316, -3.7847620753108644, -3.2813817513523587, -2.7949105141192114, -2.398924176617767, -2.1726689405554294, -2.19938365691668, -2.4773421281982335, -2.835017160407158, -3.2770765397025494, -3.751216207915419, -4.217421914996428, -4.602120978620428, -4.795680474211973, -4.772750781283822, -4.566115294039165, -4.221760984234223, -3.7752982451717534, -3.2943784674247283, -2.8006589024601216, -2.3191683016426716, -1.899624182851693, -1.590773824974629, -1.3778282843954592, -1.1597349646728576, -0.9450269228116763, -0.7371269281937376, -0.5014924406397181, -0.19295534299211534, 0.18894057260738958, 0.6556354144710601, 1.1591076564862428, 1.6344779219443328, 2.030725008480619, 2.3467324964812413, 2.650811628538369, 2.9695851043401156, 3.3030174232967457, 3.6415796085592342, 3.98614412342794, 4.378980620956809, 4.843788113597927, 5.347501971371443, 5.770834563718549, 5.962961755804898, 5.924788155338291, 5.754768001814441, 5.628889695414512, 5.539030735538584, 5.475851969940215, 5.63552696284906, 6.036863290248405, 6.533622250144403, 7.025619891272272, 7.481324184757837, 7.916114261831222]
+cy = [3.8805994987487793, 3.451124768516468, 2.9932215532588033, 2.5034839866399494, 2.0060558278957936, 1.5171831317414823, 1.0308173464167716, 0.5384579654645895, 0.03942615711750965, -0.46105411065830226, -0.9438577852069664, -1.3807255820553386, -1.7106673893437367, -1.8639742952209692, -1.8990784334005095, -1.9103531286577726, -1.9192170975966933, -1.925685495842545, -1.92977076601553, -1.9314853507358523, -1.9308416926237146, -1.9279100486130112, -1.9233384366199104, -1.9181072288650334, -1.9132007752802487, -1.9096034257974233, -1.908299530348425, -1.910273438865122, -1.9165095012793818, -1.9279920675230722, -1.9452405852132146, -1.965849141439981, -1.986276809391005, -2.0029801606925917, -2.0124157669710465, -2.011040199852675, -1.9953100309637817, -1.9616818319306728, -1.9034295993551227, -1.7580677082699256, -1.4381663939973262, -1.0256217553817153, -0.6208216126311333, -0.20618919110948603, 0.21160890748621947, 0.6152862271910645, 1.0113576203992551, 1.4180525990805077, 1.861460809930437, 2.3533100428551075, 2.8555829611074355, 3.327551652445377, 3.7230989810880457, 3.998132663442539, 4.1851108426883235, 4.336085968284642, 4.468825792698189, 4.592258415851414, 4.69612171055229, 4.765184491958299, 4.799141946792893, 4.80213127059883, 4.700272749305086, 4.39210079975802, 3.945979765995443, 3.447200288085198, 3.0297492853776813, 2.6802050530245265, 2.4475627064177408, 2.2867835377741796, 2.1001965501914928, 1.7849772175466507, 1.3231008559871598, 0.8254045171197332, 0.3661316693682328, 0.002584201826170654, -0.21863741152268004, -0.37603292425767043, -0.4043628581572838, -0.2563079071276614, 0.01510662177627619, 0.40510889723500154, 0.8599131631342186, 1.3097482866705854, 1.7606675167534076, 2.2166172770841674, 2.6567183678904023, 3.050827812148086, 3.3763129230874904, 3.550936630568077, 3.568661412979359, 3.418485627617509, 3.112015774942945, 2.723771473524321, 2.3254137389642384, 1.940990130684057, 1.5689865016504716, 1.200263688823245, 0.8370504425009622, 0.526311504414304, 0.3468625956302567, 0.3700314350995417, 0.62766259409584, 1.0919334125245366, 1.586825276894053, 2.0592986748628404, 2.542786621779649, 3.033813881477456, 3.534838679827227, 4.005114642140215, 4.299148138367079, 4.402509478171675, 4.36026534119456, 4.166468299110038, 3.8911621783605]
 
-    norm_dist = min(distance_from_center/(track_width*0.5), 1.0)
+class np:
+    pi = 3.14159265358979323846
 
-    def cos_pi2(x):
-        return math.cos(norm_dist*1.57079632679)
+    @staticmethod
+    def hypot(sx, sy):
+        return [ math.sqrt(x**2 + y**2) for x, y in zip(sx, sy) ]
 
-    def pow2(x):
-        return -(x**2)+1
+    @staticmethod
+    def cos(a):
+        if isinstance(a, (list, tuple)):
+            return [math.cos(x) for x in a]
+        else:
+            return math.cos(a)
 
-    def pow16_7(x):
-        return -math.pow(abs(x), 2.285714) + 1
+    @staticmethod
+    def sin(a):
+        if isinstance(a, (list, tuple)):
+            return [math.sin(x) for x in a]
+        else:
+            return math.sin(a)
+
+    @staticmethod
+    def argmin(d):
+        idx = 0
+        mn = d[0]
+
+        for i in range(len(d)):
+            if d[i] < mn:
+                idx = i
+                mn = d[i]
+
+        return idx
+
+    @staticmethod
+    def dot(x, y):
+        return x[0]*y[0]+x[1]*y[1]
+
+    @staticmethod
+    def arctan2(y, x):
+        return math.atan2(y, x)
+
+    @staticmethod
+    def radian(x):
+        return x*0.01745329251
+
+
+L = 0.27  # [m] Wheel base of vehicle
+k = 5.0 # control gain
+max_steer = 0.34906585039 #rad
+max_diff = 40 #deg
+
+
+class State(object):
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.yaw = 0
+        self.v = 0
+
+class Info(object):
+    def __init__(self):
+        self.closest_waypoint = 0
+        self.next_waypoint = 0
+        self._d = []
+        self.distance_from_waypoint = 0
+        self.is_left = False
+
+
+side = {}
+for i in range(0, 69):
+    side[i] = False #right
+
+for i in range(69, 86):
+    side[i] = True #left
+
+for i in range(86, 94):
+    side[i] = False #right
+
+for i in range(94, 106):
+    side[i] = True #left
+
+for i in range(106, 115):
+    side[i] = False #right
+
+def on_the_correct_side(p, is_left):
+    return not (is_left != side[p])
     
-    def penalty():
-        return float(progress*2.0)/max(float(steps), 1.0)
 
-    def f(x):
-        return pow16_7(x)
+def calc_info(state, cx, cy):
+    info = Info()
+    fx = state.x
+    fy = state.y
 
-    reward = min(max(f(norm_dist)*penalty(), 0.0), 1.0) #clamp [0.0, 1.0]
+    # Search the index of the nearest point to the front axle
+    dx = [fx - icx for icx in cx]
+    dy = [fy - icy for icy in cy]
+    d = np.hypot(dx, dy)
 
-    return reward
+    closest_idx = np.argmin(d)
+    prev_idx = (closest_idx + len(d)-1) % len(d)
+    next_idx = (closest_idx + 1) % len(d)
+
+    prev_d = d[prev_idx]
+    next_d = d[next_idx]
+
+    if prev_d < next_d:
+        p2_idx = closest_idx
+        p1_idx = prev_idx
+    else:
+        p2_idx = next_idx
+        p1_idx = closest_idx
+
+    p1 = [cx[p1_idx], cy[p1_idx]]
+    p2 = [cx[p2_idx], cy[p2_idx]]
+
+    u = [fx-p1[0], fy-p1[1]]
+    v = [p2[0]-p1[0], p2[1]-p1[1]]
+
+    cross = u[0]*v[1]-u[1]*v[0]
+
+    is_left = (cross < 0)
+
+
+    vv = [v[1], -v[0]] # perpendicular v
+    n = math.sqrt(vv[0]**2 + vv[1]**2) #norm
+    vv_n = [vv[0]/n, vv[1]/n] # normalize vv
+
+    dist = abs(np.dot(u, vv_n))
+
+    info.closest_waypoint = closest_idx
+    info._d = d
+    info.is_left = is_left
+    info.distance_from_waypoint = dist
+
+    return info
+
+
+def reward_function(params):
+    distance_from_center = params['distance_from_center']
+    x = params['x']
+    y = params['y']
+    #closest_waypoints = params['closest_waypoints']
+    #is_left_of_center = params['is_left_of_center']
+    #progress = params['progress']
+    #speed = params['speed']
+    #steering_angle = params['steering_angle']
+    #steps = params['steps']
+    track_width = params['track_width']
+    #heading = params['heading']
+
+    state = State()
+    state.x = x
+    state.y = y
+    #state.yaw = np.radian(heading)
+    #state.v = speed
+
+    rew = 1e-3
+        
+    if distance_from_center < track_width*0.5:
+        info = calc_info(state, cx, cy)
+
+        norm_dist = info.distance_from_waypoint/track_width
+
+        if norm_dist < 0.2:
+            rew = 1.0
+        elif norm_dist < 0.5:
+            rew = 0.5
+        elif norm_dist < 0.8:
+            rew = 0.1
+
+        if on_the_correct_side(info.closest_waypoint, info.is_left):
+            rew *= 2.0
+
+
+    return rew
 

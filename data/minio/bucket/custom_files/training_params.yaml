@@ -1,5 +1,5 @@
 ---
-WORLD_NAME: "AmericasGeneratedInclStart"
+WORLD_NAME: "Spain_track"
 RACE_TYPE: "TIME_TRIAL"
 SAGEMAKER_SHARED_S3_PREFIX: "current"
 CHANGE_START_POSITION: "true"
